@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meeting Summarizer</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"/>
+    <style>
+        .summary-content { white-space: pre-wrap; line-height: 1.6; }
+        .copy-btn { position: absolute; top: 1rem; right: 1rem; }
+        .history-item { margin-bottom: 1rem; }
+    </style>
+</head>
+<body>
+    <main class="container">
+        <hgroup>
+            <h1>Meeting Summarizer</h1>
+            <h2>Upload an audio or video file to get started</h2>
+        </hgroup>
+
+        <article>
+            <form id="upload-form">
+                <input type="file" name="file" id="file-input" required>
+                <button type="submit" id="submit-btn">Summarize</button>
+            </form>
+            <progress id="progress-bar" style="display: none;"></progress>
+        </article>
+
+        <article id="results-container" style="display: none;" aria-busy="false">
+            <div id="results"></div>
+        </article>
+
+        <section id="history-section">
+            <h2>History</h2>
+            {% if summaries %}
+                {% for summary in summaries %}
+                    <details class="history-item">
+                        <summary>
+                            <strong>{{ summary['filename'] }}</strong> - 
+                            <em>{{ summary['timestamp'].split('.')[0] }}</em>
+                        </summary>
+                        <article>
+                            <header><strong>Summary</strong></header>
+                            <div class="summary-content">{{ summary['summary'] }}</div>
+                        </article>
+                    </details>
+                {% endfor %}
+            {% else %}
+                <p>No summaries yet. Upload a file to start.</p>
+            {% endif %}
+        </section>
+    </main>
+
+    <script>
+        document.getElementById('upload-form').addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            const fileInput = document.getElementById('file-input');
+            const submitBtn = document.getElementById('submit-btn');
+            const resultsContainer = document.getElementById('results-container');
+            const resultsDiv = document.getElementById('results');
+            const progressBar = document.getElementById('progress-bar');
+            
+            if (fileInput.files.length === 0) {
+                alert("Please select a file first.");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            // --- UI changes for loading state ---
+            submitBtn.setAttribute('aria-busy', 'true');
+            submitBtn.disabled = true;
+            resultsContainer.style.display = 'none';
+            progressBar.style.display = 'block';
+
+            try {
+                const response = await fetch('/summarize', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                resultsContainer.style.display = 'block';
+
+                if (response.ok) {
+                    const formattedSummary = data.summary.replace(/\\n/g, '<br>');
+                    resultsDiv.innerHTML = `
+                        <button class="copy-btn" onclick="copySummary()">Copy Summary</button>
+                        <hgroup>
+                          <h3>Transcript</h3>
+                          <p>${data.transcript}</p>
+                        </hgroup>
+                        <hgroup>
+                          <h3>Summary</h3>
+                          <div class="summary-content" id="summary-text">${formattedSummary}</div>
+                        </hgroup>
+                    `;
+                } else {
+                    resultsDiv.innerHTML = '<h3>Error</h3><p>' + data.error + '</p>';
+                }
+            } catch (error) {
+                resultsContainer.style.display = 'block';
+                resultsDiv.innerHTML = '<h3>Error</h3><p>An error occurred: ' + error.message + '</p>';
+            } finally {
+                // --- Revert UI changes ---
+                submitBtn.setAttribute('aria-busy', 'false');
+                submitBtn.disabled = false;
+                progressBar.style.display = 'none';
+                // Reload the page to show the new history item at the top
+                if (!resultsDiv.innerHTML.includes('Error')) {
+                    window.location.reload();
+                }
+            }
+        });
+
+        function copySummary() {
+            const summaryText = document.getElementById('summary-text').innerText;
+            navigator.clipboard.writeText(summaryText).then(() => {
+                alert('Summary copied to clipboard!');
+            }, (err) => {
+                alert('Failed to copy text.');
+            });
+        }
+    </script>
+</body>
+</html>
