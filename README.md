@@ -2,10 +2,9 @@
 
 ## Demo Video
 
-Click the thumbnail below to watch a live demonstration of the application.
+Click the thumbnail below to watch the demo:
 
-[![Meeting Summarizer Demo](https://drive.google.com/file/d/1x23mQpUZxICPSZZKngKCjCLe6RrKnrSA/view?usp=sharing
-)]
+[![Meeting Summarizer Demo](./demo_thumbnail.png)](https://drive.google.com/file/d/1x23mQpUZxICPSZZKngKCjCLe6RrKnrSA/view?usp=sharing)
 
 ## Objective
 [cite_start]This project is designed to transcribe meeting audio and video files and generate action-oriented summaries[cite: 3]. It features a polished web interface for uploading files, a persistent history of past summaries, and is fully containerized with Docker for easy deployment and portability.
