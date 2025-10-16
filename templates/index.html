@@ -9,18 +9,24 @@
         .summary-content { white-space: pre-wrap; line-height: 1.6; }
         .copy-btn { position: absolute; top: 1rem; right: 1rem; }
         .history-item { margin-bottom: 1rem; }
+        textarea { height: 120px; }
     </style>
 </head>
 <body>
     <main class="container">
         <hgroup>
             <h1>Meeting Summarizer</h1>
-            <h2>Upload an audio or video file to get started</h2>
+            <h2>Upload an audio or video file and customize the summary prompt</h2>
         </hgroup>
 
         <article>
             <form id="upload-form">
+                <label for="file-input">Select Audio/Video File</label>
                 <input type="file" name="file" id="file-input" required>
+
+                <label for="prompt-input">Custom Prompt</label>
+                <textarea id="prompt-input" name="prompt" placeholder="e.g., Summarize this meeting in three bullet points."></textarea>
+
                 <button type="submit" id="submit-btn">Summarize</button>
             </form>
             <progress id="progress-bar" style="display: none;"></progress>
@@ -56,6 +62,7 @@
             event.preventDefault();
 
             const fileInput = document.getElementById('file-input');
+            const promptInput = document.getElementById('prompt-input');
             const submitBtn = document.getElementById('submit-btn');
             const resultsContainer = document.getElementById('results-container');
             const resultsDiv = document.getElementById('results');
@@ -68,8 +75,8 @@
 
             const formData = new FormData();
             formData.append('file', fileInput.files[0]);
+            formData.append('prompt', promptInput.value);
 
-            // --- UI changes for loading state ---
             submitBtn.setAttribute('aria-busy', 'true');
             submitBtn.disabled = true;
             resultsContainer.style.display = 'none';
@@ -104,12 +111,12 @@
                 resultsContainer.style.display = 'block';
                 resultsDiv.innerHTML = '<h3>Error</h3><p>An error occurred: ' + error.message + '</p>';
             } finally {
-                // --- Revert UI changes ---
                 submitBtn.setAttribute('aria-busy', 'false');
                 submitBtn.disabled = false;
                 progressBar.style.display = 'none';
-                // Reload the page to show the new history item at the top
                 if (!resultsDiv.innerHTML.includes('Error')) {
+                    // This forces the page to reload to show the new history item.
+                    // You can comment this out if you prefer the page not to reload.
                     window.location.reload();
                 }
             }
